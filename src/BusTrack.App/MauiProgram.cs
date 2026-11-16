@@ -34,6 +34,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<NotificationDispatcher>();
 
 		// ViewModels и страницы
+		builder.Services.AddTransient<ViewModels.MainViewModel>();
+		builder.Services.AddTransient<MainPage>();
 		builder.Services.AddTransient<ViewModels.SettingsViewModel>();
 		builder.Services.AddTransient<SettingsPage>();
 
