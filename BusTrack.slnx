@@ -1,6 +1,11 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/BusTrack.Api/BusTrack.Api.csproj" />
+    <Project Path="src/BusTrack.App/BusTrack.App.csproj" />
     <Project Path="src/BusTrack.Core/BusTrack.Core.csproj" />
     <Project Path="src/BusTrack.Model/BusTrack.Model.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/BusTrack.Tests/BusTrack.Tests.csproj" />
   </Folder>
 </Solution>

@@ -24,4 +24,8 @@
     <ProjectReference Include="..\BusTrack.Model\BusTrack.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BusTrack.Tests" />
+  </ItemGroup>
+
 </Project>
