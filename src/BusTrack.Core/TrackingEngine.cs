@@ -39,8 +39,11 @@ public sealed class TrackingEngine
         {
             var vehicles = await _api.GetVehiclesAsync(settings.RouteId, ct);
             var fresh = vehicles.Where(v => now - v.FixTime <= MaxFixAge).ToList();
+            int? dirIndex = route.Directions.Count > 0
+                ? Math.Clamp(settings.DirectionIndex, 0, route.Directions.Count - 1)
+                : null;
             var buses = fresh
-                .Select(v => StopMatcher.Match(v, route))
+                .Select(v => StopMatcher.Match(v, route, dirIndex))
                 .OrderBy(b => b.DistanceToStopMeters)
                 .ToList();
 

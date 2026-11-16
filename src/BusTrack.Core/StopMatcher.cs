@@ -5,7 +5,8 @@ namespace BusTrack.Core;
 /// <summary>Привязка позиции автобуса к ближайшей остановке маршрута.</summary>
 public static class StopMatcher
 {
-    public static TrackedBus Match(BusPosition position, BusRoute route)
+    /// <param name="directionIndex">Если задан — искать только среди остановок этого направления.</param>
+    public static TrackedBus Match(BusPosition position, BusRoute route, int? directionIndex = null)
     {
         Stop? nearest = null;
         var direction = -1;
@@ -13,6 +14,9 @@ public static class StopMatcher
 
         for (var d = 0; d < route.Directions.Count; d++)
         {
+            if (directionIndex is not null && d != directionIndex)
+                continue;
+
             foreach (var stop in route.Directions[d])
             {
                 var distance = GeoMath.DistanceMeters(position.Lat, position.Lon, stop.Lat, stop.Lon);

@@ -15,6 +15,12 @@
                     SelectedItem="{Binding SelectedRouteItem}"
                     Title="Выберите маршрут" />
 
+            <Label Text="Направление" FontAttributes="Bold" />
+            <Picker ItemsSource="{Binding DirectionItems}"
+                    ItemDisplayBinding="{Binding Label}"
+                    SelectedItem="{Binding SelectedDirectionItem}"
+                    Title="Выберите направление" />
+
             <Label Text="Остановка для уведомления" FontAttributes="Bold" />
             <Picker ItemsSource="{Binding StopItems}"
                     ItemDisplayBinding="{Binding Label}"

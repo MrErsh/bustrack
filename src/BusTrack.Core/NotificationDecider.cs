@@ -23,8 +23,12 @@ public sealed class NotificationDecider
         if (settings.WatchedStopId is null)
             return [];
 
-        var stop = route.Directions.SelectMany(d => d)
-            .FirstOrDefault(s => s.Id == settings.WatchedStopId);
+        // Остановка ищется только в выбранном направлении: у противоположного
+        // направления могут быть остановки с теми же названиями, но другими ID.
+        var dirStops = route.Directions.Count > 0
+            ? route.Directions[Math.Clamp(settings.DirectionIndex, 0, route.Directions.Count - 1)]
+            : [];
+        var stop = dirStops.FirstOrDefault(s => s.Id == settings.WatchedStopId);
         if (stop is null)
             return [];
 

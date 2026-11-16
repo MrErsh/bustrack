@@ -90,4 +90,37 @@ public class NotificationDeciderTests
         var again = new[] { TestData.Arrival("v1", "s1", later.AddMinutes(3)) };
         _decider.Decide(again, _settings, _route, later).Should().ContainSingle();
     }
+
+    [Fact]
+    public void WatchedStopInSelectedDirection_Notifies()
+    {
+        // Остановки с одинаковыми названиями, но разными ID в разных направлениях.
+        var route = TestData.Route(directions:
+        [
+            [new Stop("s1", "Двинская ул.", 59.9, 30.3)],
+            [new Stop("s2", "Двинская ул.", 59.9, 30.31)]
+        ]);
+        var settings = new TrackingSettings("370", "s2", 5, DirectionIndex: 1);
+        var predictions = new[] { TestData.Arrival("v1", "s2", TestData.T0.AddMinutes(3)) };
+
+        var notifications = _decider.Decide(predictions, settings, route, TestData.T0);
+
+        notifications.Should().ContainSingle();
+        notifications[0].StopName.Should().Be("Двинская ул.");
+    }
+
+    [Fact]
+    public void WatchedStopOfOtherDirection_NoNotification()
+    {
+        var route = TestData.Route(directions:
+        [
+            [new Stop("s1", "Двинская ул.", 59.9, 30.3)],
+            [new Stop("s2", "Двинская ул.", 59.9, 30.31)]
+        ]);
+        // Остановка второго направления, но выбрано первое.
+        var settings = new TrackingSettings("370", "s2", 5, DirectionIndex: 0);
+        var predictions = new[] { TestData.Arrival("v1", "s2", TestData.T0.AddMinutes(3)) };
+
+        _decider.Decide(predictions, settings, route, TestData.T0).Should().BeEmpty();
+    }
 }
