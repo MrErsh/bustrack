@@ -31,6 +31,7 @@ public static class MauiProgram
 		// App-сервисы
 		builder.Services.AddSingleton<ISettingsStore, PreferencesSettingsStore>();
 		builder.Services.AddSingleton<INotifier, Platforms.Android.AndroidNotifier>();
+		builder.Services.AddSingleton<IBackgroundMode, Platforms.Android.ForegroundServiceController>();
 		builder.Services.AddSingleton<NotificationDispatcher>();
 
 		// ViewModels и страницы

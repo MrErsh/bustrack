@@ -16,6 +16,7 @@ public partial class MainViewModel : ObservableObject
     private readonly IRouteCatalog _catalog;
     private readonly ISettingsStore _store;
     private readonly ITrackingService _tracking;
+    private readonly IBackgroundMode _background;
 
     [ObservableProperty]
     private string _routeTitle = string.Empty;
@@ -34,11 +35,12 @@ public partial class MainViewModel : ObservableObject
 
     public ObservableCollection<BusItem> Buses { get; } = [];
 
-    public MainViewModel(IRouteCatalog catalog, ISettingsStore store, ITrackingService tracking)
+    public MainViewModel(IRouteCatalog catalog, ISettingsStore store, ITrackingService tracking, IBackgroundMode background)
     {
         _catalog = catalog;
         _store = store;
         _tracking = tracking;
+        _background = background;
         _tracking.SnapshotReceived += OnSnapshot;
         Refresh();
     }
@@ -60,7 +62,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Start()
+    private async Task StartAsync()
     {
         var settings = _store.Load();
         if (_catalog.Find(settings.RouteId) is null)
@@ -69,8 +71,13 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
+        // Android 13+: спрашиваем разрешение на уведомления; трекинг работает и без него.
+        if (await Permissions.CheckStatusAsync<Permissions.PostNotifications>() != PermissionStatus.Granted)
+            await Permissions.RequestAsync<Permissions.PostNotifications>();
+
         Error = null;
         _tracking.Start(settings);
+        _background.Enable();
         IsRunning = true;
     }
 
@@ -78,6 +85,7 @@ public partial class MainViewModel : ObservableObject
     private void Stop()
     {
         _tracking.Stop();
+        _background.Disable();
         IsRunning = false;
     }
 
