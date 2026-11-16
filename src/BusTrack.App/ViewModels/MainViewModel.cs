@@ -11,6 +11,9 @@ namespace BusTrack.App.ViewModels;
 /// <summary>Строка списка автобусов.</summary>
 public sealed record BusItem(string Vehicle, string Stop, string Distance);
 
+/// <summary>Строка списка остановок маршрута (заголовок направления или остановка).</summary>
+public sealed record RouteInfoItem(string Text, bool IsHeader);
+
 public partial class MainViewModel : ObservableObject
 {
     private readonly IRouteCatalog _catalog;
@@ -20,6 +23,15 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _routeTitle = string.Empty;
+
+    [ObservableProperty]
+    private string? _routeName;
+
+    [ObservableProperty]
+    private string? _stopsSummary;
+
+    [ObservableProperty]
+    private bool _stopsVisible;
 
     [ObservableProperty]
     private string? _watchedStopTitle;
@@ -34,6 +46,8 @@ public partial class MainViewModel : ObservableObject
     private string? _error;
 
     public ObservableCollection<BusItem> Buses { get; } = [];
+
+    public ObservableCollection<RouteInfoItem> RouteStops { get; } = [];
 
     public MainViewModel(IRouteCatalog catalog, ISettingsStore store, ITrackingService tracking, IBackgroundMode background)
     {
@@ -51,6 +65,11 @@ public partial class MainViewModel : ObservableObject
         var settings = _store.Load();
         var route = _catalog.Find(settings.RouteId);
         RouteTitle = route is null ? $"Маршрут {settings.RouteId} не найден" : $"Маршрут {route.Number}";
+        RouteName = route?.Name;
+        StopsSummary = route is null || route.Directions.Count == 0
+            ? null
+            : "Остановок: " + string.Join(" / ", route.Directions.Select(d => d.Count));
+        FillRouteStops(route);
         WatchedStopTitle = route is null || settings.WatchedStopId is null
             ? null
             : "Уведомление: " + (route.Directions.SelectMany(d => d)
@@ -90,7 +109,27 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void ToggleStops() => StopsVisible = !StopsVisible;
+
+    [RelayCommand]
     private Task SettingsAsync() => Shell.Current.GoToAsync("settings");
+
+    private void FillRouteStops(BusRoute? route)
+    {
+        RouteStops.Clear();
+        if (route is null)
+            return;
+
+        for (var i = 0; i < route.Directions.Count; i++)
+        {
+            var dir = route.Directions[i];
+            if (dir.Count == 0)
+                continue;
+            RouteStops.Add(new RouteInfoItem($"{i + 1}. {dir[0].Name} → {dir[^1].Name}", IsHeader: true));
+            foreach (var stop in dir)
+                RouteStops.Add(new RouteInfoItem(stop.Name, IsHeader: false));
+        }
+    }
 
     private void OnSnapshot(TrackingSnapshot snapshot)
         => MainThread.BeginInvokeOnMainThread(() => ApplySnapshot(snapshot));

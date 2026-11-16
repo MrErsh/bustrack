@@ -2,9 +2,22 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:BusTrack.App.ViewModels"
+             xmlns:conv="clr-namespace:BusTrack.App.Converters"
              x:Class="BusTrack.App.MainPage"
              x:DataType="vm:MainViewModel"
              Title="BusTrack">
+
+    <ContentPage.Resources>
+        <DataTemplate x:Key="StopHeaderTemplate" x:DataType="vm:RouteInfoItem">
+            <Label Text="{Binding Text}" FontAttributes="Bold" Padding="0,8,0,2" />
+        </DataTemplate>
+        <DataTemplate x:Key="StopItemTemplate" x:DataType="vm:RouteInfoItem">
+            <Label Text="{Binding Text}" Padding="8,2" TextColor="{StaticResource Gray500}" />
+        </DataTemplate>
+        <conv:RouteInfoTemplateSelector x:Key="RouteInfoSelector"
+                                        Header="{StaticResource StopHeaderTemplate}"
+                                        Stop="{StaticResource StopItemTemplate}" />
+    </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Настройки" Command="{Binding SettingsCommand}" />
@@ -14,9 +27,26 @@
 
         <VerticalStackLayout Grid.Row="0" Spacing="4">
             <Label Text="{Binding RouteTitle}" FontSize="24" FontAttributes="Bold" />
+            <Label Text="{Binding RouteName}"
+                   IsVisible="{Binding RouteName, Converter={StaticResource IsNotNullConverter}}"
+                   FontSize="13" TextColor="{StaticResource Gray500}" />
             <Label Text="{Binding WatchedStopTitle}"
                    IsVisible="{Binding WatchedStopTitle, Converter={StaticResource IsNotNullConverter}}"
                    TextColor="{StaticResource Gray500}" />
+            <VerticalStackLayout Spacing="4"
+                                 IsVisible="{Binding RouteName, Converter={StaticResource IsNotNullConverter}}">
+                <Label Text="{Binding StopsSummary}" FontSize="13" TextColor="{StaticResource Gray500}" />
+                <Button Text="Показать остановки" FontSize="13" Padding="10,4"
+                        Command="{Binding ToggleStopsCommand}"
+                        IsVisible="{Binding StopsVisible, Converter={StaticResource InverseBoolConverter}}" />
+                <Button Text="Скрыть остановки" FontSize="13" Padding="10,4"
+                        Command="{Binding ToggleStopsCommand}"
+                        IsVisible="{Binding StopsVisible}" />
+                <ScrollView HeightRequest="240" IsVisible="{Binding StopsVisible}">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding RouteStops}"
+                                         BindableLayout.ItemTemplateSelector="{StaticResource RouteInfoSelector}" />
+                </ScrollView>
+            </VerticalStackLayout>
         </VerticalStackLayout>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="12">
