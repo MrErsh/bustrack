@@ -33,6 +33,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton<INotifier, Platforms.Android.AndroidNotifier>();
 		builder.Services.AddSingleton<NotificationDispatcher>();
 
+		// ViewModels и страницы
+		builder.Services.AddTransient<ViewModels.SettingsViewModel>();
+		builder.Services.AddTransient<SettingsPage>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif

@@ -1,10 +1,10 @@
 <Shell
     x:Class="BusTrack.App.AppShell"
     xmlns:local="clr-namespace:BusTrack.App"
-    Title="BusTrack.App">
+    Title="BusTrack">
 
     <ShellContent
-        Title="Home"
+        Title="Автобусы"
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 
