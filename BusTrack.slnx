@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/BusTrack.Core/BusTrack.Core.csproj" />
     <Project Path="src/BusTrack.Model/BusTrack.Model.csproj" />
   </Folder>
 </Solution>

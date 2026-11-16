@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BusTrack.Model\BusTrack.Model.csproj" />
+    <ProjectReference Include="..\BusTrack.Api\BusTrack.Api.csproj" />
+  </ItemGroup>
+
+</Project>
