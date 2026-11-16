@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.36.2" />
+    <PackageReference Include="Grpc.Tools" Version="2.85.0" PrivateAssets="all" />
+    <PackageReference Include="Polly" Version="8.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\gtfs-realtime.proto" GrpcServices="None" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\bustrack_catalog.json" />
+    <EmbeddedResource Include="Resources\russian_trusted_root.der" />
+    <EmbeddedResource Include="Resources\russian_trusted_sub.der" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BusTrack.Model\BusTrack.Model.csproj" />
+  </ItemGroup>
+
+</Project>
