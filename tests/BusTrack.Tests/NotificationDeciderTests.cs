@@ -123,4 +123,72 @@ public class NotificationDeciderTests
 
         _decider.Decide(predictions, settings, route, TestData.T0).Should().BeEmpty();
     }
+
+    [Fact]
+    public void TimeTriggerDisabled_NoNotification()
+    {
+        var settings = _settings with { NotifyBeforeMinutes = null };
+        var predictions = new[] { TestData.Arrival("v1", "s1", TestData.T0.AddMinutes(3)) };
+
+        _decider.Decide(predictions, settings, _route, TestData.T0).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DistanceWithinThreshold_NotifiesOnce_WithMeters()
+    {
+        var settings = _settings with { NotifyBeforeMeters = 800 };
+        // ~556 м по прямой до остановки.
+        var buses = new[] { TestData.Bus("v1", 59.905, 30.3) };
+
+        var first = _decider.DecideByDistance(buses, settings, _route, TestData.T0);
+        var second = _decider.DecideByDistance(buses, settings, _route, TestData.T0.AddSeconds(30));
+
+        first.Should().ContainSingle();
+        first[0].DistanceMeters.Should().BeInRange(500, 600);
+        first[0].Arrival.Should().BeNull();
+        first[0].StopName.Should().Be("Остановка s1");
+        second.Should().BeEmpty("один рейс — одно уведомление");
+    }
+
+    [Fact]
+    public void DistanceBeyondThreshold_NoNotification()
+    {
+        var settings = _settings with { NotifyBeforeMeters = 300 };
+        var buses = new[] { TestData.Bus("v1", 59.905, 30.3) };
+
+        _decider.DecideByDistance(buses, settings, _route, TestData.T0).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DistanceTriggerDisabled_NoNotification()
+    {
+        var buses = new[] { TestData.Bus("v1") };
+
+        _decider.DecideByDistance(buses, _settings, _route, TestData.T0).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void DistanceWatchedStopOfOtherDirection_NoNotification()
+    {
+        var route = TestData.Route(directions:
+        [
+            [new Stop("s1", "Двинская ул.", 59.9, 30.3)],
+            [new Stop("s2", "Двинская ул.", 59.9, 30.31)]
+        ]);
+        var settings = new TrackingSettings("370", "s2", 5, DirectionIndex: 0, NotifyBeforeMeters: 2000);
+        var buses = new[] { TestData.Bus("v1", 59.9, 30.31) };
+
+        _decider.DecideByDistance(buses, settings, route, TestData.T0).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void TimeAndDistanceTriggers_DeduplicateIndependently()
+    {
+        var settings = _settings with { NotifyBeforeMeters = 800 };
+        var predictions = new[] { TestData.Arrival("v1", "s1", TestData.T0.AddMinutes(3)) };
+        var buses = new[] { TestData.Bus("v1", 59.905, 30.3) };
+
+        _decider.Decide(predictions, settings, _route, TestData.T0).Should().ContainSingle();
+        _decider.DecideByDistance(buses, settings, _route, TestData.T0).Should().ContainSingle();
+    }
 }

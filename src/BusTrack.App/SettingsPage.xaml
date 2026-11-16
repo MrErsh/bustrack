@@ -29,7 +29,17 @@
 
             <Label Text="Уведомить за (минут до прибытия)" FontAttributes="Bold" />
             <Picker ItemsSource="{Binding Minutes}"
-                    SelectedItem="{Binding SelectedMinutes}" />
+                    ItemDisplayBinding="{Binding Label}"
+                    SelectedItem="{Binding SelectedMinuteItem}"
+                    Title="По времени" />
+
+            <Label Text="Уведомить при расстоянии до остановки" FontAttributes="Bold" />
+            <Picker ItemsSource="{Binding Distances}"
+                    ItemDisplayBinding="{Binding Label}"
+                    SelectedItem="{Binding SelectedDistanceItem}"
+                    Title="По расстоянию" />
+            <Label Text="Расстояние считается по прямой. В пробках надёжнее прогноза времени. Оба триггера работают независимо."
+                   FontSize="12" TextColor="{StaticResource Gray500}" />
 
             <Label Text="{Binding Error}"
                    TextColor="{StaticResource Magenta}"

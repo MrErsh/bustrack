@@ -50,8 +50,14 @@ public sealed class TrackingEngine
             IReadOnlyList<BusNotification> notifications = [];
             if (settings.WatchedStopId is not null && fresh.Count > 0)
             {
-                var arrivals = await _api.GetArrivalsAsync(fresh.Select(v => v.VehicleId).ToList(), ct);
-                notifications = _decider.Decide(arrivals, settings, route, now);
+                IReadOnlyList<BusNotification> byTime = [];
+                if (settings.NotifyBeforeMinutes is not null)
+                {
+                    var arrivals = await _api.GetArrivalsAsync(fresh.Select(v => v.VehicleId).ToList(), ct);
+                    byTime = _decider.Decide(arrivals, settings, route, now);
+                }
+                var byDistance = _decider.DecideByDistance(fresh, settings, route, now);
+                notifications = [.. byTime, .. byDistance];
             }
 
             return new TrackingSnapshot(buses, notifications, now, null);

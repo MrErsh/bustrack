@@ -28,7 +28,16 @@ public sealed class AndroidNotifier : INotifier
             Application.Context.CheckSelfPermission(global::Android.Manifest.Permission.PostNotifications) != global::Android.Content.PM.Permission.Granted)
             return;
 
-        var minutes = Math.Max(0, (int)Math.Ceiling((notification.Arrival - DateTimeOffset.UtcNow).TotalMinutes));
+        string text;
+        if (notification.DistanceMeters is { } meters)
+        {
+            text = $"{notification.StopName} — автобус уже ближе {meters} м (борт {notification.VehicleId})";
+        }
+        else
+        {
+            var minutes = Math.Max(0, (int)Math.Ceiling(((notification.Arrival ?? DateTimeOffset.UtcNow) - DateTimeOffset.UtcNow).TotalMinutes));
+            text = $"{notification.StopName} — через ~{minutes} мин (борт {notification.VehicleId})";
+        }
 
         var intent = new Intent(Application.Context, typeof(MainActivity));
         intent.SetFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop);
@@ -38,7 +47,7 @@ public sealed class AndroidNotifier : INotifier
         var builder = new Notification.Builder(Application.Context, ChannelId)
             .SetSmallIcon(Resource.Mipmap.appicon)
             .SetContentTitle("Автобус приближается")
-            .SetContentText($"{notification.StopName} — через ~{minutes} мин (борт {notification.VehicleId})")
+            .SetContentText(text)
             .SetContentIntent(pending)
             .SetAutoCancel(true);
 

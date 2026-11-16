@@ -20,19 +20,14 @@ public sealed class NotificationDecider
     {
         Prune(now);
 
-        if (settings.WatchedStopId is null)
+        if (settings.NotifyBeforeMinutes is null)
             return [];
 
-        // Остановка ищется только в выбранном направлении: у противоположного
-        // направления могут быть остановки с теми же названиями, но другими ID.
-        var dirStops = route.Directions.Count > 0
-            ? route.Directions[Math.Clamp(settings.DirectionIndex, 0, route.Directions.Count - 1)]
-            : [];
-        var stop = dirStops.FirstOrDefault(s => s.Id == settings.WatchedStopId);
+        var stop = FindWatchedStop(settings, route);
         if (stop is null)
             return [];
 
-        var horizon = now.AddMinutes(settings.NotifyBeforeMinutes);
+        var horizon = now.AddMinutes(settings.NotifyBeforeMinutes.Value);
         var result = new List<BusNotification>();
         foreach (var p in predictions)
         {
@@ -51,7 +46,55 @@ public sealed class NotificationDecider
         return result;
     }
 
+    /// <summary>
+    /// Триггер по расстоянию: автобус ближе NotifyBeforeMeters к наблюдаемой остановке.
+    /// Полезнее времени в пробках. Дедупликация своя (ключ с префиксом dist),
+    /// чтобы не подавлять и не подавляться триггером по времени.
+    /// </summary>
+    public IReadOnlyList<BusNotification> DecideByDistance(
+        IReadOnlyList<BusPosition> positions,
+        TrackingSettings settings,
+        BusRoute route,
+        DateTimeOffset now)
+    {
+        Prune(now);
+
+        if (settings.NotifyBeforeMeters is null)
+            return [];
+
+        var stop = FindWatchedStop(settings, route);
+        if (stop is null)
+            return [];
+
+        var result = new List<BusNotification>();
+        foreach (var p in positions)
+        {
+            var distance = GeoMath.DistanceMeters(p.Lat, p.Lon, stop.Lat, stop.Lon);
+            if (distance > settings.NotifyBeforeMeters.Value)
+                continue;
+
+            var key = $"dist|{p.VehicleId}|{p.TripId}|{stop.Id}";
+            if (!_notified.TryAdd(key, now))
+                continue;
+
+            result.Add(new BusNotification(p.VehicleId, stop.Id, stop.Name,
+                Arrival: null, DistanceMeters: (int)Math.Round(distance)));
+        }
+        return result;
+    }
+
     public void Reset() => _notified.Clear();
+
+    // Остановка ищется только в выбранном направлении: у противоположного
+    // направления могут быть остановки с теми же названиями, но другими ID.
+    private static Stop? FindWatchedStop(TrackingSettings settings, BusRoute route)
+    {
+        if (settings.WatchedStopId is null || route.Directions.Count == 0)
+            return null;
+
+        var dirStops = route.Directions[Math.Clamp(settings.DirectionIndex, 0, route.Directions.Count - 1)];
+        return dirStops.FirstOrDefault(s => s.Id == settings.WatchedStopId);
+    }
 
     private void Prune(DateTimeOffset now)
     {

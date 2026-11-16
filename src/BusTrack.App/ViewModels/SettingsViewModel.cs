@@ -21,15 +21,27 @@ public sealed record StopItem(Stop? Stop)
 
 public sealed record DirectionItem(int Index, string Label);
 
+public sealed record MinuteItem(int? Minutes)
+{
+    public string Label => Minutes is null ? "Выключено" : $"{Minutes} мин";
+}
+
+public sealed record DistanceItem(int? Meters)
+{
+    public string Label => Meters is null ? "Выключено" : $"{Meters} м";
+}
+
 public partial class SettingsViewModel : ObservableObject
 {
-    public static readonly int[] MinutesOptions = [1, 2, 3, 5, 7, 10, 15];
+    public static readonly int?[] MinutesOptions = [null, 1, 2, 3, 5, 7, 10, 15];
+    public static readonly int?[] DistanceOptions = [null, 300, 500, 800, 1000, 1500, 2000];
 
     private readonly ISettingsStore _store;
     private readonly ITrackingService _tracking;
 
     public IReadOnlyList<RouteItem> RouteItems { get; }
-    public IReadOnlyList<int> Minutes => MinutesOptions;
+    public IReadOnlyList<MinuteItem> Minutes { get; } = MinutesOptions.Select(m => new MinuteItem(m)).ToList();
+    public IReadOnlyList<DistanceItem> Distances { get; } = DistanceOptions.Select(m => new DistanceItem(m)).ToList();
 
     [ObservableProperty]
     private ObservableCollection<StopItem> _stopItems = [new(null)];
@@ -47,7 +59,10 @@ public partial class SettingsViewModel : ObservableObject
     private StopItem? _selectedStopItem;
 
     [ObservableProperty]
-    private int _selectedMinutes;
+    private MinuteItem? _selectedMinuteItem;
+
+    [ObservableProperty]
+    private DistanceItem? _selectedDistanceItem;
 
     [ObservableProperty]
     private string? _error;
@@ -62,9 +77,10 @@ public partial class SettingsViewModel : ObservableObject
         SelectedRouteItem = RouteItems.FirstOrDefault(r => r.Route.Id == settings.RouteId);
         RebuildDirections(settings.DirectionIndex);
         RebuildStops(settings.WatchedStopId);
-        SelectedMinutes = MinutesOptions.Contains(settings.NotifyBeforeMinutes)
-            ? settings.NotifyBeforeMinutes
-            : 5;
+        SelectedMinuteItem = Minutes.FirstOrDefault(m => m.Minutes == settings.NotifyBeforeMinutes)
+            ?? Minutes.First(m => m.Minutes == 5);
+        SelectedDistanceItem = Distances.FirstOrDefault(d => d.Meters == settings.NotifyBeforeMeters)
+            ?? Distances[0];
     }
 
     partial void OnSelectedRouteItemChanged(RouteItem? value)
@@ -117,8 +133,9 @@ public partial class SettingsViewModel : ObservableObject
         var settings = new TrackingSettings(
             SelectedRouteItem.Route.Id,
             SelectedStopItem?.Stop?.Id,
-            SelectedMinutes,
-            SelectedDirectionItem?.Index ?? 0);
+            SelectedMinuteItem?.Minutes,
+            SelectedDirectionItem?.Index ?? 0,
+            SelectedDistanceItem?.Meters);
 
         _store.Save(settings);
         if (_tracking.IsRunning)
